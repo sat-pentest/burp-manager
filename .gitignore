@@ -2,6 +2,9 @@
 bin/
 obj/
 
+# Built EXE — distributed via GitHub Releases instead
+*.exe
+
 # Visual Studio / Rider
 .vs/
 .idea/
