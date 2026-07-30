@@ -84,4 +84,18 @@ internal static class Theme
     {
         try { if (c.IsHandleCreated) SetWindowTheme(c.Handle, "DarkMode_Explorer", null); } catch { }
     }
+
+    /// <summary>Rounded-rectangle path helper (shared by custom-drawn controls).</summary>
+    public static System.Drawing.Drawing2D.GraphicsPath RoundRect(Rectangle r, int rad)
+    {
+        int d = Math.Max(1, rad) * 2;
+        var p = new System.Drawing.Drawing2D.GraphicsPath();
+        if (d >= r.Width || d >= r.Height) { p.AddRectangle(r); return p; }
+        p.AddArc(r.Left, r.Top, d, d, 180, 90);
+        p.AddArc(r.Right - d, r.Top, d, d, 270, 90);
+        p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+        p.AddArc(r.Left, r.Bottom - d, d, d, 90, 90);
+        p.CloseFigure();
+        return p;
+    }
 }

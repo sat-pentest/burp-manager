@@ -326,6 +326,7 @@ public sealed class MainForm : Form
             UpdateCounts();
             _entries.Invalidate(_entries.GetItemRectangle(idx));
         };
+        SlimScroll.ForList(_entries);   // purple custom scrollbar
 
         var entHost = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Panel, Padding = new Padding(8, 0, 8, 8) };
         entHost.Controls.Add(_entries);
@@ -512,6 +513,7 @@ public sealed class MainForm : Form
         g.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(43, 43, 43);
         g.DataError += (_, e) => e.ThrowException = false;
         AttachEnumEditor(g);
+        SlimScroll.ForGrid(g);   // purple custom scrollbar
         return g;
     }
 
@@ -710,11 +712,26 @@ public sealed class MainForm : Form
         if (_current is null) return;
         var g = isInclude ? _incGrid : _excGrid;
         var list = isInclude ? _current.Include : _current.Exclude;
-        var toRemove = g.SelectedRows.Cast<DataGridViewRow>().Select(r => r.Tag as ScopeRule).Where(x => x != null).ToList();
+        var selRows = g.SelectedRows.Cast<DataGridViewRow>().ToList();
+        var toRemove = selRows.Select(r => r.Tag as ScopeRule).Where(x => x != null).ToList();
         if (toRemove.Count == 0) { SetStatus("삭제할 행을 선택하세요."); return; }
+        int anchor = selRows.Min(r => r.Index);
+        int first = Math.Max(0, g.FirstDisplayedScrollingRowIndex);
         foreach (var r in toRemove) list.Remove(r!);
         LoadGrid(g, list);
         MarkDirty(); UpdateCounts(); RefreshEntries();
+        RestoreView(g, first, anchor);   // keep the scroll position instead of jumping to top
+    }
+
+    /// <summary>Restore a grid's scroll offset and a sensible selection after a reload.</summary>
+    private static void RestoreView(DataGridView g, int firstRow, int anchorRow)
+    {
+        if (g.RowCount == 0) return;
+        int sel = Math.Max(0, Math.Min(anchorRow, g.RowCount - 1));
+        g.ClearSelection();
+        g.Rows[sel].Selected = true;
+        int first = Math.Max(0, Math.Min(firstRow, g.RowCount - 1));
+        try { g.FirstDisplayedScrollingRowIndex = first; } catch { }
     }
 
     private void MoveRule(bool isInclude, int dir)
@@ -755,6 +772,7 @@ public sealed class MainForm : Form
             if (i >= 0) _entries.SelectedIndex = i;
         }
         else if (_entries.Items.Count > 0) _entries.SelectedIndex = 0;
+        SlimScroll.Refresh(_entries);
         UpdateCounts();
     }
 
@@ -1022,6 +1040,7 @@ public sealed class MainForm : Form
             DrawMode = DrawMode.OwnerDrawFixed, ItemHeight = 24,
         };
         _activeList.DrawItem += DrawActiveItem;
+        SlimScroll.ForList(_activeList);   // purple custom scrollbar
         _activeList.DoubleClick += (_, _) =>
         {
             if (_activeList.SelectedItem is ProgramGroup g) { _current = g; SwitchModule("PROGRAMS"); SelectEntry(g); }
@@ -1106,6 +1125,7 @@ public sealed class MainForm : Form
         _activeList.Items.Clear();
         foreach (var g in progs.Where(p => p.Enabled).OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
             _activeList.Items.Add(g);
+        SlimScroll.Refresh(_activeList);
 
         // --- master info ---
         _masterInfo.Text =
@@ -1244,6 +1264,7 @@ public sealed class MainForm : Form
         root.Controls.Add(bar);
         root.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 6, BackColor = Theme.Bg });
         root.Controls.Add(head);
+        SlimScroll.WrapTop(root);   // purple custom scrollbar instead of native AutoScroll bar
         return root;
     }
 
@@ -1433,10 +1454,14 @@ public sealed class MainForm : Form
 
     private void GridRemove<T>(DataGridView g, List<T> list, Action reload) where T : JsonRow
     {
-        var sel = g.SelectedRows.Cast<DataGridViewRow>().Select(r => r.Tag as T).Where(x => x != null).ToList();
+        var selRows = g.SelectedRows.Cast<DataGridViewRow>().ToList();
+        var sel = selRows.Select(r => r.Tag as T).Where(x => x != null).ToList();
         if (sel.Count == 0) { SetStatus("삭제할 행을 선택하세요."); return; }
+        int anchor = selRows.Min(r => r.Index);
+        int first = Math.Max(0, g.FirstDisplayedScrollingRowIndex);
         foreach (var x in sel) list.Remove(x!);
         reload(); MarkDirty(); PersistProxy();
+        RestoreView(g, first, anchor);   // keep the scroll position instead of jumping to top
     }
 
     private void GridMove<T>(DataGridView g, List<T> list, int dir, Action reload) where T : JsonRow
@@ -1584,6 +1609,7 @@ public sealed class MainForm : Form
         _lintGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Severity", FillWeight = 12 });
         _lintGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Program", FillWeight = 20 });
         _lintGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Finding", FillWeight = 68 });
+        SlimScroll.ForGrid(_lintGrid);   // purple custom scrollbar
 
         var head = new Label { Text = "VALIDATE  ·  ROE lint", Dock = DockStyle.Top, Height = 30, ForeColor = Theme.Brand, Font = Theme.Brandy };
         root.Controls.Add(_lintGrid);

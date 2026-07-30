@@ -20,3 +20,5 @@ project.assets.json
 # OS
 Thumbs.db
 .DS_Store
+
+*.bak
