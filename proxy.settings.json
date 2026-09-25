@@ -2,31 +2,179 @@
   "proxy": {
     "request_listeners": [
       {
-        "running": true,
-        "listen_mode": "loopback_only",
-        "listen_specific_address": "",
+        "certificate_mode": "per_host",
+        "custom_tls_protocols": [
+          "TLSv1",
+          "TLSv1.1",
+          "TLSv1.2",
+          "TLSv1.3"
+        ],
+        "enable_http2": true,
+        "listen_mode": "all_interfaces",
         "listener_port": 8080,
-        "support_invisible_proxying": true
+        "running": true,
+        "use_custom_tls_protocols": false
       }
     ],
     "intercept_client_requests": {
       "do_intercept": true,
       "rules": [
         {
+          "boolean_operator": "and",
           "enabled": true,
-          "boolean_operator": "or",
+          "match_relationship": "does_not_match",
           "match_type": "file_extension",
-          "match_relationship": "matches",
-          "match_condition": ""
+          "match_condition": "(^gif$|^jpg$|^png$|^css$|^js$|^ico$|^svg$|^eot$|^woff$|^woff2$|^ttf$)"
+        },
+        {
+          "boolean_operator": "or",
+          "enabled": true,
+          "match_relationship": "contains_parameters",
+          "match_type": "request"
+        },
+        {
+          "boolean_operator": "or",
+          "enabled": false,
+          "match_relationship": "does_not_match",
+          "match_type": "http_method",
+          "match_condition": "(get|post)"
+        },
+        {
+          "boolean_operator": "and",
+          "enabled": false,
+          "match_relationship": "is_in_target_scope",
+          "match_type": "url"
         }
       ]
     },
     "intercept_server_responses": {
       "do_intercept": true,
-      "rules": []
+      "rules": [
+        {
+          "boolean_operator": "or",
+          "enabled": false,
+          "match_relationship": "matches",
+          "match_type": "content_type_header",
+          "match_condition": "text"
+        },
+        {
+          "boolean_operator": "or",
+          "enabled": false,
+          "match_relationship": "was_modified",
+          "match_type": "request"
+        },
+        {
+          "boolean_operator": "or",
+          "enabled": false,
+          "match_relationship": "was_intercepted",
+          "match_type": "request"
+        },
+        {
+          "boolean_operator": "and",
+          "enabled": false,
+          "match_relationship": "does_not_match",
+          "match_type": "status_code",
+          "match_condition": "^304$"
+        },
+        {
+          "boolean_operator": "and",
+          "enabled": true,
+          "match_relationship": "is_in_target_scope",
+          "match_type": "url"
+        }
+      ]
     },
-    "match_replace_rules": []
+    "match_replace_rules": [
+      {
+        "category": "regex",
+        "comment": "Emulate Edge",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^User-Agent.*$",
+        "string_replace": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0"
+      },
+      {
+        "category": "regex",
+        "comment": "Emulate iOS",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^User-Agent.*$",
+        "string_replace": "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"
+      },
+      {
+        "category": "regex",
+        "comment": "Emulate Android",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^User-Agent.*$",
+        "string_replace": "User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
+      },
+      {
+        "category": "regex",
+        "comment": "Require non-cached response",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^If-Modified-Since.*$"
+      },
+      {
+        "category": "regex",
+        "comment": "Require non-cached response",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^If-None-Match.*$"
+      },
+      {
+        "category": "regex",
+        "comment": "Hide Referer header",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^Referer.*$"
+      },
+      {
+        "category": "regex",
+        "comment": "Require non-compressed responses",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^Accept-Encoding.*$"
+      },
+      {
+        "category": "regex",
+        "comment": "Ignore cookies",
+        "enabled": false,
+        "rule_type": "response_header",
+        "string_match": "^Set-Cookie.*$"
+      },
+      {
+        "category": "regex",
+        "comment": "Rewrite Host header",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_match": "^Host: foo.example.org$",
+        "string_replace": "Host: bar.example.org"
+      },
+      {
+        "category": "literal",
+        "comment": "Add spoofed CORS origin",
+        "enabled": false,
+        "rule_type": "request_header",
+        "string_replace": "Origin: foo.example.org"
+      },
+      {
+        "category": "regex",
+        "comment": "Remove HSTS headers",
+        "enabled": false,
+        "rule_type": "response_header",
+        "string_match": "^Strict\\-Transport\\-Security.*$"
+      },
+      {
+        "category": "literal",
+        "comment": "Disable browser XSS protection",
+        "enabled": false,
+        "rule_type": "response_header",
+        "string_replace": "X-XSS-Protection: 0"
+      }
+    ]
   },
   "includeInExport": false,
-  "matchReplaceScopeOnly": false
+  "matchReplaceScopeOnly": true
 }
