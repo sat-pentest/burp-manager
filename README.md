@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="BurpSuite Manager" width="100%">
+</p>
+
 # 🟣 BurpSuite Manager
 
 > 점검 대상마다 Burp 스코프·프록시 설정을 손으로 다시 만드는 일을 없애는 데스크톱 앱
