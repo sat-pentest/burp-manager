@@ -28,9 +28,7 @@
 
 ## 🔁 스코프 관리 흐름
 
-```
-마스터 JSON  →  대상 선택  →  VALIDATE  →  EXPORT ▸ Burp
-```
+<img src="assets/scope-flow.svg" alt="master JSON → select → validate → export ▸ Burp" width="100%">
 
 - **INCLUDE** in-scope 규칙 — 프로토콜 · 호스트(정규식) · 포트 · 파일 경로
 - **EXCLUDE** out-of-scope 규칙 — 동일 스키마로 예외 지정
